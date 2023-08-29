@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+	PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+	"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="store">
+
+	<select id="selectStoreCatList" resultClass="String">
+		SELECT * FROM CAT_STORE
+	</select>
+	
+	<insert id="insertStore" parameterClass="storeVO">
+	
+		<selectKey keyProperty="store_no" resultClass="int">
+			SELECT store_seq.nextVal store_no From dual
+		</selectKey>
+			INSERT INTO store (
+								store_no
+							   ,store_name
+							   ,cat_name
+							   ,store_addr
+							   ,store_tel
+							   ,store_hour
+							   ,store_break
+							   ,store_url
+							   ,store_des_s
+							   ,store_des_d
+							   ,store_rate
+							   ,store_views
+							   ,store_like
+							   ,store_fav
+							   ,store_rdt
+							   ,gb_del
+							  )
+					   VALUES (
+					   		  	#store_no#
+					   		   ,#store_name#
+					   		   ,#cat_name#
+					   		   ,#store_addr#
+					   		   ,#store_tel#
+					   		   ,NVL(#store_hour#, ' ')
+					   		   ,NVL(#store_break#, ' ')
+					   		   ,NVL(#store_url#, ' ')
+					   		   ,NVL(#store_des_s#, ' ')
+					   		   ,NVL(#store_des_d#, ' ')
+					   		   ,'0'
+					   		   ,'0'
+					   		   ,'0'
+					   		   ,'0'
+					   		   ,SYSDATE
+					   		   ,#gb_del#
+					   		  )
+	</insert>
+		
+	<insert id="insertStoreTag" parameterClass="storeVO">
+		INSERT INTO store_tag (store_no, store_tagNm_1, store_tagNm_2, store_tagNm_3) VALUES (#store_no#, #store_tagNm_1#, #store_tagNm_2#, #store_tagNm_3#)
+	</insert>
+	<select id="selectStoreList" parameterClass="Map" resultClass="storeVO">
+		SELECT s.*, t.store_tagNm_1, t.store_tagNm_2, t.store_tagNm_3
+		  FROM (
+				SELECT *
+				  FROM (
+				  		SELECT rownum rnum, v1.*
+						  FROM (
+						  		SELECT *
+								  FROM store
+								 <isNotEmpty property="cat">
+								 WHERE cat_name = #cat#
+								 </isNotEmpty>
+								 ORDER BY store_no
+						  		) v1
+						 WHERE rownum <![CDATA[ <= ]]> #end#
+				  		) v2
+				 WHERE rnum <![CDATA[ >= ]]> #start#
+				) s, store_tag t
+		WHERE s.store_no = t.store_no
+	</select>
+	
+	<select id="selectStoreListT" parameterClass="Map" resultClass="storeVO">
+		SELECT *
+		  FROM (
+				SELECT *
+				  FROM (
+				  		SELECT rownum rnum, v1.*
+						  FROM (
+						  		SELECT s.*, st.STORE_TAGNM_1,st.STORE_TAGNM_2 ,st.STORE_TAGNM_3 
+								  FROM store s, STORE_TAG st
+								 WHERE s.store_no = st.store_no
+								   AND (st.STORE_TAGNM_1 = #tag# OR st.STORE_TAGNM_2 = #tag# OR st.STORE_TAGNM_3 = #tag#)
+								 ORDER BY s.store_no
+						  		) v1
+						 WHERE rownum <![CDATA[ <= ]]> #end#
+				  		) v2
+				 WHERE rnum <![CDATA[ >= ]]> #start#
+				)
+	</select>
+	
+	<select id="selectStoreCount" parameterClass="String" resultClass="int">
+		SELECT COUNT(*) cnt
+		  FROM store
+		 WHERE gb_del != 'Y'
+		 <isNotNull>
+			 <isNotEqual compareValue="">
+			   AND cat_name = #cat#
+			 </isNotEqual>
+		 </isNotNull>
+	</select>
+	
+	<select id="selectStoreTagCount" parameterClass="String" resultClass="int">
+		SELECT COUNT(*) cnt
+		  FROM store s, store_tag st
+		 WHERE s.store_no = st.store_no
+		  AND (st.STORE_TAGNM_1 = #tag# OR st.STORE_TAGNM_2 = #tag# OR st.STORE_TAGNM_3 = #tag#)
+	</select>
+	
+	<select id="selectStoreView" parameterClass="int" resultClass="storeVO">
+		SELECT s.*, t.store_tagnm_1, t.store_tagnm_2, t.store_tagnm_3
+		  FROM store s, store_tag t 
+		 WHERE s.store_no = t.store_no
+		   AND s.store_no = #store_no#
+	</select>
+	
+	<update id="updateStore" parameterClass="storeVO">
+		UPDATE store SET store_name = #store_name#
+					    ,cat_name = #cat_name#
+					    ,store_addr = #store_addr#
+					    ,store_tel = #store_tel#
+					    ,store_hour = #store_hour#
+					    ,store_break = #store_break#
+					    ,store_url = #store_url#
+					    ,store_des_s = #store_des_s#
+					    ,store_des_d = #store_des_d#
+					    ,gb_del = #gb_del#
+	     WHERE store_no = #store_no#
+	</update>
+	
+	<select id="selectTagList" resultClass="String">
+		SELECT * FROM tag_info ORDER BY store_tagnm
+	</select>
+	
+	<insert id="insertTagName" parameterClass="String">
+		INSERT INTO tag_info ( store_tagnm ) VALUES ( #tagName# )
+	</insert>
+	
+	<delete id="deleteTagName" parameterClass="String">
+		DELETE FROM tag_info WHERE store_tagnm = #tagName#
+	</delete>
+	
+	<update id="updateStoreTag" parameterClass="storeVO">
+		UPDATE store_tag SET store_tagNm_1 = #store_tagNm_1#
+							,store_tagNm_2 = #store_tagNm_2#
+							,store_tagNm_3 = #store_tagNm_3#
+		 WHERE store_no = #store_no#
+	</update>
+	
+	<insert id="insertImgStore" parameterClass="imgStoreVO">
+		<selectKey keyProperty="img_no" resultClass="int">
+			SELECT img_store_seq.nextVal img_no From dual
+		</selectKey>
+		INSERT INTO img_store ( img_no, store_no, img_url, img_updt ) VALUES ( #img_no#, #store_no#, #img_url#, SYSDATE )
+	</insert>
+	
+	<delete id="deleteImgStore" parameterClass="int">
+		DELETE FROM img_store WHERE store_no = #store_no#
+	</delete>
+	
+	<delete id="deleteThumbImgStore" parameterClass="int">
+		DELETE FROM img_store WHERE store_no = #store_no#
+	</delete>
+	
+	<select id="selectImgStoreList" parameterClass="int" resultClass="imgStoreVO">
+		SELECT img_no, store_no, img_url, img_updt FROM img_store WHERE store_no = #store_no#
+	</select>
+	
+	<update id="updateThumb" parameterClass="storeVO">
+		UPDATE store SET thumb_url = #thumb_url# WHERE store_no = #store_no#
+	</update>
+	
+	<select id="selectStoreVo" parameterClass="int" resultClass="storeVO">
+		SELECT * 
+		FROM store s, store_tag t
+		WHERE s.store_no = t.store_no
+		  AND s.store_no = #store_no#
+	</select>
+	
+	<select id="selectStoreTotalCount" resultClass="int">
+		SELECT COUNT(*) FROM store WHERE gb_del = 'N'
+	</select>
+	
+	
+	
+	<update id="updateStoreViews" parameterClass="int">
+		UPDATE store SET store_views = store_views + 1 WHERE store_no = #store_no#
+	</update>
+	
+	<select id="selectUserLike" parameterClass="likeStoreVO" resultClass="int">
+		SELECT NVL(like_cnt, 0) like_cnt
+		  FROM store_like
+		 WHERE store_no = #store_no#
+		   AND user_no = #user_no#
+	</select>
+	
+	<update id="updateLike" parameterClass="likeStoreVO">
+		MERGE INTO store_like sl
+		USING dual
+		   ON (sl.store_no = #store_no# AND sl.user_no = #user_no#)
+		 WHEN MATCHED THEN
+		 	UPDATE SET sl.like_cnt = (sl.like_cnt + #like_cnt#)
+		 WHEN NOT MATCHED THEN
+		 	INSERT (sl.store_no, sl.user_no, sl.like_cnt)
+		 	VALUES (#store_no#, #user_no#, #like_cnt#)
+	</update>
+	
+	<update id="updateStoreLikeCount" parameterClass="int">
+		UPDATE store
+	    SET store_like = (SELECT NVL(SUM(LIKE_CNT), 0) FROM v WHERE store_no = #store_no# )
+	    WHERE store_no = #store_no#
+	</update>
+	
+	<select id="selectLikeCount" parameterClass="int" resultClass="int">
+		SELECT NVL(SUM(like_cnt), 0) 
+		  FROM store_like
+		 WHERE store_no = #store_no#
+	</select>
+	
+	<select id="selectUserFav" parameterClass="favStoreVO" resultClass="int">
+		SELECT NVL(fav_cnt, 0) fav_cnt
+		  FROM store_favorites
+		 WHERE store_no = #store_no#
+		   AND user_no = #user_no#
+	</select>
+	
+	<update id="updateFav" parameterClass="favStoreVO">
+		MERGE INTO store_favorites sf
+		USING dual
+		   ON (sf.store_no = #store_no# AND sf.user_no = #user_no#)
+		 WHEN MATCHED THEN
+		 	UPDATE SET sf.fav_cnt = (sf.fav_cnt + #fav_cnt#)
+		 WHEN NOT MATCHED THEN
+		 	INSERT (sf.store_no, sf.user_no, sf.fav_cnt)
+		 	VALUES (#store_no#, #user_no#, #fav_cnt#)
+	</update>
+	
+	<update id="updateStoreFavCount" parameterClass="int">
+		UPDATE store
+	    SET store_fav = (SELECT NVL(SUM(fav_cnt), 0) FROM store_favorites WHERE store_no = #store_no# )
+	    WHERE store_no = #store_no#
+	</update>
+	
+	<select id="selectFavCount" parameterClass="int" resultClass="int">
+		SELECT NVL(SUM(fav_cnt), 0) 
+		  FROM store_favorites
+		 WHERE store_no = #store_no#
+	</select>
+	
+	<select id="selectReviewStoreVoList" parameterClass="int" resultClass="reviewStoreVO">
+		SELECT sr.*, u.user_img
+		  FROM store_review sr, user_ u
+		 WHERE sr.store_no = #store_no#
+		   AND sr.user_no = u.user_no
+		   AND sr.gb_del = 'N'
+		ORDER BY re_no DESC
+	</select>
+	
+	<select id="selectImgReviewStoreVoList" parameterClass="int" resultClass="imgReviewStoreVO">
+		SELECT *
+		  FROM img_store_review
+		 WHERE store_no = #store_no#
+	</select>
+	
+	<insert id="insertReview" parameterClass="reviewStoreVO">
+		<selectKey keyProperty="re_no" resultClass="int">
+			SELECT review_no_seq.nextVal re_no From dual
+		</selectKey>
+		INSERT INTO store_review (re_no, user_no, store_no, user_nick, re_content, rate, re_wdt, gb_del) 
+						  VALUES (#re_no#, #user_no#, #store_no#, #user_nick#, #re_content#, #rate#, SYSDATE, 'N')
+	</insert>
+	
+	<select id="selectReview" parameterClass="int" resultClass="reviewStoreVO">
+		SELECT sr.RE_NO, sr.USER_NO, sr.STORE_NO, sr.USER_NICK, sr.RE_CONTENT, sr.RATE, sr.RE_WDT, sr.GB_DEL, us.USER_IMG 
+  		  FROM store_review sr, user_ us 
+ 		 WHERE sr.user_no = us.user_no
+  		   AND sr.re_no = #re_no#
+	</select>
+	
+	<select id="selectRateAvg" parameterClass="int" resultClass="float">
+		SELECT ROUND(AVG(rate), 1) FROM STORE_REVIEW sr WHERE store_no = #store_no# AND gb_del = 'N'
+	</select>
+	
+	<update id="updateRateAvg" parameterClass="int">
+		UPDATE store SET store_rate = (SELECT ROUND(AVG(rate), 1) FROM STORE_REVIEW sr WHERE store_no = #store_no# AND gb_del = 'N') WHERE store_no = #store_no#
+	</update>
+	
+	<update id="deleteReview" parameterClass="int">
+		UPDATE store_review SET gb_del = 'Y' WHERE re_no = #re_no#
+	</update>
+	
+	<select id="mainStoreVoList" resultClass="storeVO">
+		SELECT * FROM (
+		    SELECT s.*, st.store_tagNm_1,st.store_tagNm_2,st.store_tagNm_3 FROM store s, store_tag st
+		    WHERE s.store_no = st.store_no And s.gb_del = 'N' AND s.thumb_url IS NOT NULL
+		    ORDER BY DBMS_RANDOM.VALUE
+			)
+		WHERE ROWNUM <![CDATA[ <= ]]> 12
+		
+	</select>
+	
+	<select id="selectStoreVoList" resultClass="storeVO">
+		<!-- SELECT * FROM store WHERE gb_del = 'N' AND thumb_url is not null AND STORE_NO = 1 OR STORE_NO = 2 OR STORE_NO  = 3 -->
+		SELECT * FROM (
+		    SELECT * FROM store
+		    WHERE gb_del = 'N' AND thumb_url IS NOT NULL
+		    ORDER BY DBMS_RANDOM.VALUE
+			)
+		WHERE ROWNUM <![CDATA[ <= ]]> 3
+	</select>
+</sqlMap>

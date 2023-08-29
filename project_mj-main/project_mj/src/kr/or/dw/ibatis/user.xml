@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+	PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+	"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="user">
+
+	<select id="getUser_nick" parameterClass="String" resultClass = "String">
+		SELECT user_nick FROM user_ WHERE user_nick = #user_nick#
+	</select>
+	
+	<insert id="insertUser" parameterClass="UserVO">
+		
+		<selectKey keyProperty="user_no" resultClass="int">
+			SELECT user_seq.nextval user_no 
+			FROM dual
+		</selectKey>
+		
+		INSERT INTO user_ (
+							user_no
+							,user_email
+							,user_pass
+							,user_name
+							,user_nick
+							,auth_cd
+							,user_sdt
+							,gb_del
+							)
+					VALUES (
+							#user_no#
+							,#user_email#
+							,#user_pass#
+							,#user_name#
+							,#user_nick#
+							,'B101'
+							,SYSDATE
+							,'N'
+							)
+	</insert>
+
+	<select id="loginUser" parameterClass="String" resultClass="UserVO">
+		SELECT * FROM user_ WHERE user_email= #user_email#
+	</select>
+		
+	<select id="selectUserList" parameterClass="Map" resultClass="userVO">
+
+		SELECT user_no
+			  ,user_email
+			  ,user_nick
+			  ,user_sdt
+			  ,gb_del
+		  FROM (
+				SELECT *
+				  FROM (
+				  		SELECT rownum rnum, v1.*
+						  FROM (
+						  		SELECT *
+								  FROM user_
+								 ORDER BY user_no
+						  		) v1
+						 WHERE rownum <![CDATA[ <= ]]> #end#
+				  		) v2
+				 WHERE rnum <![CDATA[ >= ]]> #start#
+				) u
+	</select>
+
+	<select id="selectUserCount" resultClass="int">
+		SELECT COUNT(*) cnt
+		  FROM user_
+	</select>
+	
+	<update id="updateUser" parameterClass="userVO">
+		UPDATE user_ 
+		SET user_nick = #user_nick# 
+			,user_pass = #user_pass#
+		 WHERE user_no = #user_no#
+	</update>
+	
+	<update id="deleteUser" parameterClass="int">
+		UPDATE user_
+		   SET gb_del = 'Y'
+		 WHERE user_no = #user_no#
+	</update>
+
+	<select id="selectAnList" resultClass="anVo">
+		SELECT * FROM bd_announce WHERE gb_del = 'N' ORDER BY bd_no
+	</select>
+
+	<insert id="insertContent" parameterClass="anVo">
+		<selectKey keyProperty="bd_no" resultClass="int">
+			SELECT bd_announce_seq.nextVal bd_no FROM dual
+		</selectKey>
+			INSERT INTO
+			bd_announce (
+						bd_no
+					   ,bd_title
+					   ,bd_content
+					   ,bd_wdt
+					   ,gb_del
+					)
+			VALUES (
+						#bd_no#
+					   ,#bd_title#
+					   ,#bd_content#
+					   ,SYSDATE
+					   ,'N'
+					)
+	</insert>
+	
+	
+	 <select id="selectAnCount" resultClass="int">
+		SELECT COUNT(*) cnt
+		  FROM bd_announce
+		 WHERE gb_del = 'N'
+	</select>
+
+	<select id="pageCount" resultClass="int">
+			SELECT COUNT(bd_no) FROM bd_announce
+	</select>
+	
+	
+	<select id="selectAnView" parameterClass="int" resultClass="anVo">
+		SELECT bd_no
+			  ,bd_title
+			  ,bd_content
+			  ,bd_wdt
+			  ,gb_del 
+	      FROM bd_announce 
+	      WHERE	gb_del = 'N'
+	        AND bd_no = #bd_no#
+	</select>
+
+	<update id="deleteAn" parameterClass="int" >
+		UPDATE bd_announce
+		   SET gb_del = 'Y'
+		 WHERE bd_no = #bd_no#
+	</update>
+
+	<update id="updateAn" parameterClass="anVo" >
+		UPDATE bd_announce 
+		SET bd_title = #bd_title#
+			,bd_content = #bd_content#
+		 WHERE bd_no = #bd_no#
+	</update>
+
+	<update id="updateUserPicPath" parameterClass="userVO">
+		UPDATE user_ SET user_img = #user_img# WHERE user_no = #user_no#
+	</update>
+	
+	<select id="selectStoreLikeCount" parameterClass="int" resultClass="int">
+		SELECT NVL(SUM(like_cnt), 0) FROM store_like WHERE user_no = #user_no#
+	</select>
+	
+	<select id="selectStoreListL" parameterClass="Map" resultClass="storeVO">
+		SELECT *
+		  FROM (
+				SELECT *
+				  FROM (
+				  		SELECT rownum rnum, v1.*
+						  FROM (
+						  		SELECT s.*, st.STORE_TAGNM_1, st.STORE_TAGNM_2, st.STORE_TAGNM_3
+  								  FROM store s, store_like sl, STORE_TAG st 
+ 								 WHERE s.store_no = sl.store_no
+ 								   AND s.store_no = st.STORE_NO 
+  								   AND sl.user_no = #user_no#
+						  		) v1
+						 WHERE rownum <![CDATA[ <= ]]> #end#
+				  		) v2
+				 WHERE rnum <![CDATA[ >= ]]> #start#
+				)
+	</select>
+	
+	<select id="selectStoreFavCount" parameterClass="int" resultClass="int">
+		SELECT NVL(SUM(fav_cnt), 0) FROM store_favorites WHERE user_no = #user_no#
+	</select>
+	
+	<select id="selectStoreListF" parameterClass="Map" resultClass="storeVO">
+		SELECT *
+		  FROM (
+				SELECT *
+				  FROM (
+				  		SELECT rownum rnum, v1.*
+						  FROM (
+						  		SELECT s.*, st.STORE_TAGNM_1, st.STORE_TAGNM_2, st.STORE_TAGNM_3
+  								  FROM store s, STORE_FAVORITES sf, STORE_TAG st 
+ 								 WHERE s.store_no = sf.store_no
+ 								   AND s.store_no = st.STORE_NO 
+  								   AND sf.user_no = #user_no#
+						  		) v1
+						 WHERE rownum <![CDATA[ <= ]]> #end#
+				  		) v2
+				 WHERE rnum <![CDATA[ >= ]]> #start#
+				)
+	</select>
+	
+	<select id="selectUser" parameterClass="int" resultClass="userVO">
+		SELECT * FROM user_ WHERE user_no = #user_no#
+	</select>
+</sqlMap>

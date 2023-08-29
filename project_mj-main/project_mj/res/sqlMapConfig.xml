@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMapConfig
+	PUBLIC "-//ibatis.apache.org//DTD SQL Map Config 2.0//EN"
+	"http://ibatis.apache.org/dtd/sql-map-config-2.dtd">
+<sqlMapConfig>
+
+	<!-- DB와 연결하는 정보를 properties 파일에 설정해 놓고
+		 이 properties 파일의 내용을 읽어올 수 있도록 설정한다. -->
+	<properties resource = "dbinfo.properties" />
+	
+	<!-- 각각의 sqlMap 파일의 네임스페이스와 id속성값을 연결해서 실행할 쿼리문을 선택한다. -->
+	<settings useStatementNamespaces = "true" />
+	
+	<!-- 쿼리문에 사용할 VO객체는 패키지 이름을 포함하는 전체 이름을 사용해야  하는데
+		  그렇게 되면 문장이 너무 길어질 수 있다. 그래서 전체 이름을 대신할 alias를 설정할 수 있다.
+		 (형식) <typeAlias alias = "alias명" type = "클래스의 전체 이름" /> -->
+	 <typeAlias alias = "userVO" type="kr.or.dw.user.vo.UserVO" />
+	 <typeAlias alias = "commVO" type="kr.or.dw.comm.vo.CommVO" />
+	 <typeAlias alias = "likeVO" type="kr.or.dw.comm.vo.LikeVO" />
+	 <typeAlias alias = "replyVO" type="kr.or.dw.comm.vo.ReplyVO" />
+	 <typeAlias alias = "storeVO" type="kr.or.dw.store.vo.StoreVO" />
+	 <typeAlias alias = "likeStoreVO" type="kr.or.dw.store.vo.LikeStoreVO" />
+	 <typeAlias alias = "favStoreVO" type="kr.or.dw.store.vo.FavStoreVO" />
+	 <typeAlias alias = "imgStoreVO" type="kr.or.dw.store.vo.ImgStoreVO" />
+	 <typeAlias alias = "reviewStoreVO" type="kr.or.dw.store.vo.ReviewStoreVO" />
+	 <typeAlias alias = "imgReviewStoreVO" type="kr.or.dw.store.vo.ImgReviewStoreVO" />
+	 <typeAlias alias = "anVO" type="kr.or.dw.cs.vo.AnnouncementVO" />
+	
+	<!-- DB와 연결을 처리하는 부분 -->
+	<transactionManager type="JDBC">
+		<dataSource type="SIMPLE">
+			<property name="JDBC.Driver" value="${driver}"/>
+			<property name="JDBC.ConnectionURL" value="${url}"/>
+			<property name="JDBC.Username" value="${user}"/>
+			<property name="JDBC.Password" value="${pass}"/>
+		</dataSource>
+	</transactionManager>
+	
+	<!-- 실행할 SQL문 파일 등록하기 -->
+	<!-- 실행할 SQL문은 xml 문서로 따로 만든 후 그 xml 문서를 아래와 같이 등록하면 된다. -->
+	<!-- <sqlMap resource = "경로명/파일명.xml" /> -->
+	<sqlMap resource="kr/or/dw/ibatis/user.xml" />
+	<sqlMap resource="kr/or/dw/ibatis/comm.xml" />
+	<sqlMap resource="kr/or/dw/ibatis/store.xml" />
+	
+</sqlMapConfig>

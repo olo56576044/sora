@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.dw.dao.EmpSalDAO">
+	
+	<!--  Find  -->
+	
+	<select id="getCompanyList" resultType="company">
+		SELECT *
+		FROM company
+		WHERE 1=1 
+	</select>
+
+	<select id="getCompany" resultType="company">
+		SELECT * FROM company WHERE 1=1
+		<if test="searchType == 'w'.toString()">
+			AND c_name LIKE '%' || #{keyword} || '%'
+		</if>
+		<if test="searchType == 'c'.toString()">
+			AND c_no LIKE '%' || #{keyword} || '%'
+		</if>
+		<if test="searchType == 'cw'.toString()">
+			AND (c_name LIKE '%' || #{keyword} || '%'
+			OR c_no LIKE '%' || #{keyword} || '%')
+		</if>
+		ORDER BY c_no
+	</select>
+	
+	<select id="getDeptList" resultType="dept">
+		SELECT *
+		FROM dept
+		WHERE 1=1 
+	</select>
+
+	<select id="getDept" resultType="dept">
+		SELECT * FROM dept WHERE 1=1
+		<if test="searchType == 'w'.toString()">
+			AND dept_no LIKE '%' || #{keyword} || '%'
+		</if>
+		<if test="searchType == 'c'.toString()">
+			AND dname LIKE '%' || #{keyword} || '%'
+		</if>
+		<if test="searchType == 'cw'.toString()">
+			AND (dept_no LIKE '%' || #{keyword} || '%'
+			OR dname LIKE '%' || #{keyword} || '%')
+		</if>
+		ORDER BY dept_no
+	</select>
+	
+	<select id="getEmpList" resultType="emp">
+		SELECT *
+		FROM emp
+		WHERE 1=1
+		AND c_no = #{c_no} 
+	</select>
+
+	<select id="getEmp" resultType="emp">
+		SELECT * FROM emp WHERE 1=1 AND c_no = #{c_no}
+		<if test="searchType == 'w'.toString()">
+			AND emp_no LIKE '%' || #{keyword} || '%'
+		</if>
+		<if test="searchType == 'c'.toString()">
+			AND e_name LIKE '%' || #{keyword} || '%'
+		</if>
+		<if test="searchType == 'cw'.toString()">
+			AND (emp_no LIKE '%' || #{keyword} || '%'
+			OR e_name LIKE '%' || #{keyword} || '%')
+		</if>
+		ORDER BY emp_no
+	</select>
+	
+	<sql id="search">
+		<if test="cri.searchType == 'a'.toString()">
+			AND E_NAME LIKE '%' || #{cri.keyword} || '%'
+		</if>
+		<if test="cri.searchType == 'b'.toString()">
+			AND C_NAME LIKE '%' || #{cri.keyword} || '%'
+		</if>
+		<if test="cri.searchType == 'c'.toString()">
+			AND DNAME LIKE '%' || #{cri.keyword} || '%'
+		</if>
+		<if test="cri.searchType == 'd'.toString()">
+			AND E_RANK LIKE '%' || #{cri.keyword} || '%'
+		</if>
+		<if test="cri.searchType == 'all'.toString()">
+			AND (
+			E_NAME LIKE '%' || #{cri.keyword} || '%'
+			OR
+			C_NAME LIKE '%' || #{cri.keyword} || '%'
+			OR
+			DNAME LIKE '%' || #{cri.keyword} || '%'
+			OR
+			E_RANK LIKE '%' || #{cri.keyword} || '%'
+			)
+		</if>
+	</sql>
+	
+	<!--  Emp  -->
+	
+	<select id="selectEmpList" resultType="Map">
+		SELECT e.emp_no, e.e_name, d.dname, e.e_email, e.e_tel, e.e_rank, c.c_name
+		  FROM emp e, dept d, company c
+		  WHERE e.dept_no = d.dept_no
+		  AND e.c_no = c.c_no
+		  AND e.enabled = 'YES'
+		  AND e.c_no = #{c_no}
+		<include refid="search"/>
+		ORDER BY e.emp_no desc
+	</select>
+	
+	<select id="selectEmpListCount" resultType="int">
+		SELECT COUNT(*)
+		 FROM emp e, dept d, company c
+		 WHERE e.dept_no = d.dept_no
+		  AND e.c_no = c.c_no
+		  AND e.enabled = 'YES'
+		  AND e.c_no = #{c_no}
+		<include refid="search"/>
+	</select>
+	
+	<select id="selectDetail" resultType="Map">
+		SELECT e.*, d.*, c.*, (SELECT e_name FROM emp WHERE emp_no = e.emp_no2) daemu
+		  FROM emp e, dept d, company c
+		  WHERE e.dept_no = d.dept_no
+		  AND e.c_no = c.c_no
+		  AND e.emp_no = #{emp_no}
+	</select>
+	
+	<insert id="insertEmp" parameterType="emp">
+		INSERT INTO emp (
+			emp_no,
+			e_rank,
+			e_tel,
+			e_name,
+			e_hd,
+			e_dd,
+			c_no,
+			e_email,
+			e_sal,
+			e_bank,
+			e_account,
+			e_tenure,
+			enabled,
+			dept_no,
+			emp_no2,
+			e_sva,
+			e_eva,
+			sys_up,
+			sys_regdate,
+			sys_updatedate,
+			sys_reg,
+			stampimg
+			)
+		VALUES(
+			emp_no_seq.nextval,
+			#{e_rank},
+			#{e_tel},
+			#{e_name},
+			#{e_hd, jdbcType = DATE},
+			#{e_dd, jdbcType = DATE},
+			#{c_no},
+			#{e_email, jdbcType = VARCHAR},
+			#{e_sal},
+			#{e_bank},
+			#{e_account},
+			#{e_tenure},
+			'YES',
+			#{dept_no},
+			#{emp_no2},
+			null,
+			null,
+			#{sys_up},
+			sysdate,
+			sysdate,
+			#{sys_reg},
+			#{stampimg, jdbcType = VARCHAR}
+		)
+	</insert>
+	
+	<update id="modifyEmp" parameterType="emp">
+		UPDATE emp SET 		emp_no		=	#{emp_no},
+						   e_rank 		=	#{e_rank},
+						    e_tel 		=	#{e_tel},
+							e_name 		=	#{e_name},
+							e_dd		=	#{e_dd, jdbcType = DATE},
+							c_no		=	#{c_no},
+							e_email 	=	#{e_email},
+							e_sal 		= 	#{e_sal},
+							e_bank		=	#{e_bank},
+							e_account	=	#{e_account},
+							e_tenure	=	#{e_tenure},
+							dept_no		=	#{dept_no},
+							emp_no2		=	#{emp_no2},
+							e_sva		=	#{e_sva, jdbcType = DATE},
+							e_eva		=	#{e_eva, jdbcType = DATE},
+							sys_up		=	#{sys_up},
+							sys_updatedate	=	sysdate,
+							stampimg	=	#{stampimg, jdbcType = VARCHAR}
+				WHERE emp_no = #{emp_no}
+	</update>
+	
+	<update id="deleteEmp" parameterType="emp">
+		UPDATE emp SET 		enabled 		= 	'NO',
+							sys_up			=	#{sys_up},
+							sys_updatedate	=	sysdate
+				WHERE emp_no = #{emp_no}
+	</update>
+	
+	<!--  Extrapay  -->
+	
+	<select id="selectExtrapayList" resultType="Map">
+		SELECT *
+		  FROM extrapay
+		  WHERE 1=1
+	</select>
+	
+	<select id="selectExtrapayListCount" resultType="int">
+		SELECT COUNT(*)
+		  FROM extrapay
+		   WHERE 1=1
+	</select>
+</mapper>

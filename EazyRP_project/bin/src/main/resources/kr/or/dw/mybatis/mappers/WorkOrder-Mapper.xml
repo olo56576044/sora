@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.dw.dao.WorkOrderDAO">
+
+	<sql id="search">
+		<if test="cri.searchType == 'w'.toString()">
+			AND e.E_NAME LIKE '%' || #{cri.keyword} || '%'
+		</if>
+		<if test="cri.searchType == 't'.toString()">
+			AND w.WO_NAME LIKE '%' || #{cri.keyword} || '%'
+		</if>
+		<if test="cri.searchType == 'tw'.toString()">
+			AND (
+			w.WO_NAME LIKE '%' || #{cri.keyword} || '%'
+			OR
+			e.E_NAME LIKE '%' || #{cri.keyword} || '%'
+			)
+		</if>
+	</sql>
+
+	<select id="selectSearchWorkOrderList" resultType="workOrder">
+		SELECT	w.*, e.e_name
+		FROM	workorder w, emp e
+		WHERE	1=1
+		AND		w.emp_no = e.emp_no
+		AND		w.c_no = #{c_no}
+		<include refid="search"></include>
+		ORDER BY w.wo_no desc
+	</select>
+	
+	<select id="selectSearchWorkOrderListCount" resultType="int">
+		SELECT	COUNT(*)
+		FROM	workorder w, emp e
+		WHERE	1=1
+		AND		w.emp_no = e.emp_no
+		AND		w.c_no = #{c_no}
+		<include refid="search"></include>
+	</select>
+	
+	<select id="selectEName" resultType="str">
+		SELECT	e.e_name
+		FROM	workorder wo, emp e
+		WHERE	wo.emp_no = e.emp_no
+	</select>
+	
+	<!-- 이해 안됨 --><!-- 이해 안됨 --><!-- 이해 안됨 --><!-- 이해 안됨 --><!-- 이해 안됨 -->
+	<insert id="insertWorkOrder" parameterType="workOrder">
+		<selectKey keyProperty="wo_no" order="BEFORE" resultType="java.lang.String">
+			<include refid="makeWorkOrderNoSeq"/>
+		</selectKey>
+		INSERT INTO workorder (
+			wo_no,
+			wo_name,
+			sys_regdate,
+			fac_no,
+			emp_no,
+			c_no,
+			deliverydate,
+			progress,
+			files,
+			enabled
+		)
+		VALUES(
+			#{wo_no},	<!-- 셀렉트키를 이용함으로써 이게 된다고? -->
+			#{wo_name},
+			sysdate,
+			#{fac_no},
+			#{emp_no},
+			#{c_no},
+			#{deliverydate},
+			#{progress},
+			#{files},
+			'y'
+		)
+	</insert>
+	
+	<sql id="makeWorkOrderNoSeq">
+		SELECT ('WO_') || CASE 
+							WHEN LENGTH(workorder_seq.nextval) = 1
+							THEN '00' || workorder_seq.nextval
+							WHEN LENGTH(workorder_seq.nextval) = 2
+							THEN '0' || workorder_seq.nextval
+							ELSE '' || workorder_seq.nextval
+				   	      END WO_NO
+		  FROM dual
+	</sql>
+	
+	<insert id="insertWorkOrderDetail" parameterType="workOrder">
+		INSERT INTO workorderdetail (
+			detail_no,
+			quantity,
+			wo_no,
+			pr_no
+		)
+		VALUES (
+			workorderdetail_seq.nextval,	<!-- 하드코딩을 시퀀서로 한거라고 생각하면됨 -->
+			#{quantity},
+			#{wo_no},
+			#{pr_no}
+		)
+	</insert>
+	<!-- 이해 안됨 --><!-- 이해 안됨 --><!-- 이해 안됨 --><!-- 이해 안됨 --><!-- 이해 안됨 -->
+	
+	<select id="selectWorkOrderDetail" parameterType="str" resultType="Map">
+		SELECT 	wo.wo_no, wo.wo_name, f.fac_name, e.e_name, 
+				TO_CHAR(wo.DELIVERYDATE, 'yyyy-MM-dd') DELIVERYDATE, 
+				wo.PROGRESS, wo.FILES, c.c_name,
+				TO_CHAR(wo.sys_regdate, 'yyyy-MM-dd') sys_regdate
+		FROM workorder wo, factory f, emp e, company c
+		WHERE wo.fac_no = f.fac_no
+		AND wo.emp_no = e.EMP_NO
+		AND wo.c_no = c.c_no
+		AND wo.wo_no = #{wo_no}
+	</select>
+	
+	<select id="selectWorkOrderDetailList" resultType="Map">
+		SELECT ROWNUM, p.pr_name ,wd.WO_NO ,wd.QUANTITY ,wd.DETAIL_NO 
+		FROM WORKORDER wo, WORKORDERDETAIL wd, PRODUCT p 
+		WHERE wo.wo_no = wd.WO_NO
+		AND wd.pr_no = p.pr_no
+		AND wo.wo_no = #{wo_no}				
+	</select>	
+	
+</mapper>

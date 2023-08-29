@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+	PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+	"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="comm">
+	
+	<select id="selectUserCommList" parameterClass="int" resultClass="commVO">
+		SELECT * FROM bd_comm WHERE user_no = #user_no#
+	</select>
+	
+	<select id="selectCommList" parameterClass="Map" resultClass="commVO">
+				SELECT b.*, u.USER_IMG
+						FROM (
+						    SELECT *
+						    FROM (
+						        SELECT rownum rnum, v1.*
+						        FROM (
+						            SELECT *
+						            FROM bd_comm
+						            WHERE gb_del = 'N'
+						            ORDER BY bd_no DESC
+						        ) v1
+						        WHERE rownum <![CDATA[ <= ]]> #end#
+						    ) v2
+						    WHERE rnum <![CDATA[ >= ]]> #start#
+						) b
+						JOIN USER_ u ON b.user_no = u.user_no
+
+	</select>
+	
+	<!-- <update id="updateCommLikeCount" parameterClass="int">
+	    UPDATE BD_COMM
+	    SET BD_LIKE = (SELECT COUNT(*) FROM BD_COMM_LIKE WHERE BD_NO = #bd_no#)
+	    WHERE BD_NO = #bd_no#
+	</update> -->
+	
+	<update id="updateCommLikeCount" parameterClass="int">
+		UPDATE bd_comm 
+		SET bd_like = (SELECT NVL(SUM(like_cnt), 0) FROM bd_comm_like WHERE bd_no = #bd_no#)
+	</update>
+	
+	
+ 	<select id="selectCommCount" resultClass="int">
+		SELECT COUNT(*) cnt
+		  FROM bd_comm
+		 WHERE gb_del = 'N'
+	</select>
+	
+	<select id="selectCommView" parameterClass="int" resultClass="commVO">
+		SELECT bd_no
+			  ,bd_title
+			  ,bd_content
+			  ,bd_wdt
+			  ,bd_hit
+			  ,NVL((SELECT SUM(like_cnt)
+			  		  FROM bd_comm_like
+			  		 WHERE bd_no = b.bd_no), 0) bd_like
+			  ,NVL((SELECT COUNT(*)
+			  		  FROM bd_comm_re
+			  		 WHERE bd_no = b.bd_no), 0) reply_cnt
+			  ,b.user_no
+			  ,b.user_nick
+		  FROM bd_comm b
+		  	  ,user_ u
+		 WHERE b.user_no = u.user_no
+		   AND b.gb_del = 'N'
+		   AND bd_no = #bd_no#
+	</select> 
+	
+	
+	
+	<update id="updateContent" parameterClass="commVO">
+		UPDATE bd_comm
+		  SET bd_title= #bd_title# ,
+		  	  bd_content = #bd_content#
+		 WHERE bd_no = #bd_no# 			
+	</update>
+	
+	<insert id="insertContent" parameterClass="commVO">
+		<selectKey keyProperty="bd_no" resultClass="int">
+			SELECT bd_comm_seq.nextVal bd_no FROM dual
+		</selectKey>
+			INSERT INTO
+			bd_comm b(
+						bd_no
+					   ,user_no
+					   ,bd_cat
+					   ,bd_title
+					   ,user_nick
+					   ,bd_content
+					   ,bd_hit
+					   ,bd_like
+					   ,bd_wdt
+					   ,gb_del
+					)
+			VALUES (
+						#bd_no#
+					   ,#user_no#
+					   ,#bd_cat#
+					   ,#bd_title#
+					   ,#user_nick#
+					   ,#bd_content#
+					   ,0
+					   ,0
+					   ,SYSDATE
+					   ,'N'
+					)
+	</insert>
+	
+	
+	<select id="selectReplyList" parameterClass="int" resultClass="replyVO">
+		SELECT re_no
+			  ,bd_no
+			  ,r.user_no
+			  ,re_content
+			  ,re_wdt
+			  ,r.user_nick
+		  FROM bd_comm_re r
+		  	  ,user_ u
+		 WHERE r.user_no = u.user_no
+		   AND r.gb_del = 'N'
+		   AND bd_no = #bd_no#
+		 ORDER BY re_no DESC
+	</select>
+	
+	
+	<update id="increaseHit" parameterClass="int">
+		UPDATE bd_comm
+		  SET bd_hit = bd_hit + 1
+		WHERE bd_no = #bd_no#  
+	</update>
+	
+	
+	<select id="selectUserLike" parameterClass="likeVO" resultClass="int">
+		SELECT NVL(like_cnt, 0) like_cnt
+		  FROM bd_comm_like 
+		 WHERE bd_no = #bd_no#
+		   AND user_no = #user_no#
+	</select>	
+	
+	<update id="deleteContent" parameterClass="int">
+		UPDATE bd_comm
+		  SET gb_del = 'Y'
+		WHERE bd_no = #bd_no#  
+	</update>
+	
+	<select id="selectCatComm" resultClass="String">
+		SELECT cat_name FROM cat_bd_comm
+	</select>
+	
+	<!-- 없으면 넣고 있으면 --> 
+	<update id="updateLike" parameterClass="likeVO">
+		MERGE INTO bd_comm_like l
+		USING dual
+		   ON (l.bd_no = #bd_no# AND l.user_no = #user_no#)
+		 WHEN MATCHED THEN
+		 	UPDATE SET l.like_cnt = (l.like_cnt + #like_cnt#)
+		 WHEN NOT MATCHED THEN
+		 	INSERT (l.bd_no, l.user_no, l.like_cnt)
+		 	VALUES (#bd_no#, #user_no#, #like_cnt#)
+		 	
+		 	<!-- MERGE INTO bd_comm_like l
+		USING dual
+		   ON (l.bd_no = #bd_no# AND l.user_no = #user_no#)
+		 WHEN MATCHED THEN
+		 	UPDATE SET l.like_cnt = (l.like_cnt + #like_cnt#)
+		 WHEN NOT MATCHED THEN
+		 	INSERT (l.bd_no, l.user_no, l.like_cnt)
+		 	VALUES (#bd_no#, #user_no#, #like_cnt#) -->
+	</update>
+	
+	
+<!--그 게시글의 좋아요 갯수를  샘 -->
+	<select id="selectLikeCount" parameterClass="int" resultClass="int">
+		SELECT NVL(SUM(like_cnt), 0) 
+		  FROM bd_comm_like
+		 WHERE bd_no = #bd_no#
+	</select>
+	
+	
+	
+	
+	
+	
+	<insert id="insertReply" parameterClass="replyVO">
+	
+		<selectKey keyProperty="re_no" resultClass="int">
+			 SELECT bd_comm_re_seq.nextval re_no FROM dual
+		</selectKey>
+		
+		 INSERT INTO
+			BD_COMM_RE  (
+				re_no
+			   ,bd_no
+			   ,re_content
+			   ,re_wdt
+			   ,user_no
+			   ,USER_NICK 
+			   ,gb_del
+			)
+			VALUES (
+				#re_no#
+			   ,#bd_no#
+			   ,#re_content#
+			   ,SYSDATE
+			   ,#user_no#
+			   ,#user_nick#
+			   ,'N'
+			)
+	</insert>
+
+	<select id="selectReply" parameterClass="int" resultClass="replyVO">
+		SELECT re_no
+			  ,bd_no
+			  ,re_content
+			  ,re_wdt
+			  ,r.user_no
+			  ,r.user_nick
+		  FROM BD_COMM_RE r
+		  	  ,USER_ u 
+		 WHERE r.user_no = u.user_no
+		   AND r.gb_del = 'N'
+		   AND re_no = #re_no#		
+	</select>
+
+	<update id="updateReply" parameterClass="replyVO">
+		 UPDATE BD_COMM_RE  SET re_content = #re_content# WHERE re_no = #re_no#
+	</update>
+	
+	<update id="deleteReply" parameterClass="int">
+		UPDATE BD_COMM_RE SET gb_del = 'Y' WHERE re_no = #re_no#
+	</update>
+	
+	<select id="pageCount" resultClass="int">
+			SELECT COUNT(bd_no) FROM BD_COMM 
+	</select>
+
+
+</sqlMap>

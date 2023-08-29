@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="project_mj 복사본/src"/>
+	<classpathentry kind="src" path="project_mj/src"/>
+	<classpathentry kind="lib" path="project_mj/WebContent/WEB-INF/lib/commons-beanutils-1.8.3.jar"/>
+	<classpathentry kind="lib" path="project_mj/WebContent/WEB-INF/lib/commons-codec-1.15.jar"/>
+	<classpathentry kind="lib" path="project_mj/WebContent/WEB-INF/lib/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="project_mj/WebContent/WEB-INF/lib/cos.jar"/>
+	<classpathentry kind="lib" path="project_mj/WebContent/WEB-INF/lib/gson-2.8.5.jar"/>
+	<classpathentry kind="lib" path="project_mj/WebContent/WEB-INF/lib/ibatis-2.3.4.726.jar"/>
+	<classpathentry kind="lib" path="project_mj/WebContent/WEB-INF/lib/ojdbc6.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
+	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
